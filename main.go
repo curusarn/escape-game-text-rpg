@@ -2,55 +2,36 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/curusarn/escape-game-text-rpg/direction"
 )
 
-// xPos := 0
-// yPos := 0
 const help = `
 Move around to expore with 'go <direction>'.
+Directions: 'north'/'east'/'south'/'west'
 Show this help with 'help'.
 Exit with 'exit'.
 `
 
-type Direction int64
+var xPos int = 0
+var yPos int = 0
 
-const (
-	North Direction = iota
-	South
-	East
-	West
-)
+const xLen int = 5
+const yLen int = 5
 
-func parseDirection(str string) (Direction, error) {
-	switch str {
-	case "n":
-		fallthrough
-	case "north":
-		return North, nil
-
-	case "s":
-		fallthrough
-	case "south":
-		return South, nil
-
-	case "e":
-		fallthrough
-	case "east":
-		return East, nil
-
-	case "w":
-		fallthrough
-	case "west":
-		return West, nil
-	}
-	return North, errors.New("Unknown direction")
+var gameMap [][]int = [][]int{
+	{0, 0, 0, 0, 0},
+	{0, 0, 1, 0, 0},
+	{0, 1, 1, 1, 0},
+	{0, 0, 1, 0, 0},
+	{0, 0, 0, 0, 0},
 }
 
 func main() {
+	fmt.Println("You are standing in the middle of nowhere.\nType your next action.")
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Print("> ")
@@ -66,20 +47,60 @@ func main() {
 	}
 }
 
-func move(dir Direction) string {
+func lookAround() string {
+	return fmt.Sprintf("When you look North: %s\n", peekStr(direction.North)) +
+		fmt.Sprintf("When you look East: %s\n", peekStr(direction.East)) +
+		fmt.Sprintf("When you look South: %s\n", peekStr(direction.South)) +
+		fmt.Sprintf("When you look West: %s\n", peekStr(direction.West))
+}
+
+func peekStr(dir direction.Direction) string {
+	str, _ := peek(dir)
+	return str
+}
+func peekBool(dir direction.Direction) bool {
+	_, free := peek(dir)
+	return free
+}
+
+func peek(dir direction.Direction) (string, bool) {
+	x := xPos + dir.GetXDelta()
+	y := yPos + dir.GetYDelta()
+
+	if x < 0 || y < 0 || x >= xLen || y >= yLen {
+		return "You see the edge of the map.", false
+	}
+	val := gameMap[y][x]
+	switch val {
+	case 0:
+		return "You see free space.", true
+	case 1:
+		return "You see a wall.", false
+	default:
+		return "You see PANIC!", false
+	}
+}
+
+func move(dir direction.Direction) string {
 	var msg string
 
-	switch dir {
-	case North:
-		msg = "You went north."
-	case South:
-		msg = "You went south."
-	case East:
-		msg = "You went east."
-	case West:
-		msg = "You went west."
+	if !peekBool(dir) {
+		msg = "You cannot go that way!"
+	} else {
+		xPos += dir.GetXDelta()
+		yPos += dir.GetYDelta()
+		switch dir {
+		case direction.North:
+			msg = "You went north."
+		case direction.South:
+			msg = "You went south."
+		case direction.East:
+			msg = "You went east."
+		case direction.West:
+			msg = "You went west."
+		}
 	}
-	return msg + "\nYou see wastelands all around you"
+	return msg + "\n" + lookAround()
 }
 
 func execInput(input string) string {
@@ -92,7 +113,7 @@ func execInput(input string) string {
 		if length != 2 {
 			return "go where?"
 		}
-		dir, err := parseDirection(words[1])
+		dir, err := direction.ParseDirection(words[1])
 		if err != nil {
 			return "I don't know that direction"
 		}
@@ -107,9 +128,9 @@ func execInput(input string) string {
 		if length != 1 {
 			return "what do you want to do?"
 		}
-		dir, err := parseDirection(words[0])
+		dir, err := direction.ParseDirection(words[0])
 		if err != nil {
-			return "I don't know what that means. Maybe try shouting fo help?"
+			return "I don't know what that means. Maybe try shouting for help?"
 		}
 		return move(dir)
 	}
