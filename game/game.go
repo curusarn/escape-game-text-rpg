@@ -17,10 +17,10 @@ type Game struct {
 	MoveMsg        string
 	Intro          string
 	Help           string
-	CantMoveMsg    string
+	GameState      int
 }
 
-func (g *Game) Start() {
+func (g *Game) Start() int {
 	fmt.Println(g.Intro)
 
 	reader := bufio.NewReader(os.Stdin)
@@ -37,7 +37,7 @@ func (g *Game) Start() {
 		ok, resp := g.HandleInput(input)
 		fmt.Println(resp)
 		if ok == false {
-			return
+			return g.GameState
 		}
 	}
 }
@@ -53,7 +53,7 @@ func (g *Game) MovePlayer(d position.Direction) (bool, string) {
 	newPos := g.PlayerPosition.Move(d)
 	newTer := g.GetTerrainOnPosition(newPos)
 	if !newTer.IsFree() {
-		return false, newTer.CantMoveMsg
+		return false, newTer.CantMoveMsg + "\n"
 	}
 	g.PlayerPosition = newPos
 	return true, ""
@@ -71,7 +71,15 @@ func (g *Game) LookAround() string {
 		g.Peak(position.DirectionWest)
 }
 
+func (g *Game) SetGameState() {
+	t := g.GetTerrainOnPosition(g.PlayerPosition)
+	if t.GameState != 0 {
+		g.GameState = t.GameState
+	}
+}
+
 func (g *Game) EvalPlayerPosition() (bool, string) {
+	defer g.SetGameState()
 	t := g.GetTerrainOnPosition(g.PlayerPosition)
 	if t.IsDeadly() {
 		return false, t.DeathMsg
