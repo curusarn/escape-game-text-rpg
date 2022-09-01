@@ -3,6 +3,8 @@ package game
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"strings"
 
@@ -20,29 +22,57 @@ type Game struct {
 	Intro          string
 	Help           string
 	GameState      int
+	ActionStr      string
+	ActionFunc     ActionFuncType
 
-	LogFile    string
-	ActionStr  string
-	ActionFunc ActionFuncType
+	LevelName    string
+	ScreenLog    io.Writer
+	StatusLog    io.Writer
+	statusLogger *log.Logger
+}
+
+func LogPrintf(w io.Writer, format string, args ...interface{}) {
+	fmt.Printf(format, args...)
+	fmt.Fprintf(w, format, args...)
+}
+
+func (g *Game) Printf(format string, args ...interface{}) {
+	LogPrintf(g.ScreenLog, format, args...)
+}
+
+func (g *Game) InitLogger() {
+	pid := os.Getpid()
+	prefix := fmt.Sprintf("[pid: %d, %s] ", pid, g.LevelName)
+	g.statusLogger = log.New(g.StatusLog, prefix, log.Default().Flags())
+	g.statusLogger.Printf("Game started\n")
+}
+
+func (g *Game) LogStatus() {
+	t := g.GetTerrainOnPosition(g.PlayerPosition)
+	g.statusLogger.Printf("Player position: [%d,%d]; Terrain: %s\n", g.PlayerPosition.X, g.PlayerPosition.Y, t.PeakMsg)
 }
 
 func (g *Game) Start() int {
-	fmt.Println(g.Intro)
+	g.InitLogger()
+	g.Printf("%s\n", g.Intro)
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
 
-		fmt.Print("> ")
+		g.Printf("> ")
 		// Read the keyboad input.
 		input, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			g.Printf("ERROR: Could not read input: %v\n", err)
 		}
+		fmt.Fprint(g.ScreenLog, input)
 
 		// Handle the execution of the input.
 		ok, resp := g.HandleInput(input)
-		fmt.Println(resp)
+		g.Printf("%s\n", resp)
+		g.LogStatus()
 		if ok == false {
+			g.statusLogger.Printf("Game ended with GameState: %d\n", g.GameState)
 			return g.GameState
 		}
 	}

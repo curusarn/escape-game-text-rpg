@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"io"
 	"time"
 
 	"github.com/curusarn/escape-game-text-rpg/game"
@@ -19,22 +19,22 @@ const congats = `
                   |___/                                                   
 `
 
-func EvalDigAction(g *game.Game) (bool, string) {
-	fmt.Printf("You started digging at current location ")
+func evalDigAction(g *game.Game) (bool, string) {
+	g.Printf("You started digging at current location ")
 	for i := 0; i < 5; i++ {
-		fmt.Printf(".")
+		g.Printf(".")
 		time.Sleep(1 * time.Second)
 	}
-	fmt.Printf("\n")
+	g.Printf("\n")
 	t := g.GetTerrainOnPosition(g.PlayerPosition)
 	if t.ActionStr == treasureStr {
 		g.GameState = 2
 		return false, "You have found something!" + congats
 	}
-	return true, "You have saerched the whole place and found nothing."
+	return true, "You have searched the whole place and found nothing."
 }
 
-func level2() int {
+func level2(screenLog, statusLog io.Writer) int {
 	peekPlains := "free space (plains)"
 	xx := terrain.Terrain{
 		PeakMsg:   peekPlains,
@@ -163,7 +163,10 @@ Exit with 'exit'.
 		Intro:          intro,
 		Help:           help,
 		ActionStr:      "dig",
-		ActionFunc:     EvalDigAction,
+		ActionFunc:     evalDigAction,
+		ScreenLog:      screenLog,
+		StatusLog:      statusLog,
+		LevelName:      "level2",
 	}
 
 	return g.Start()

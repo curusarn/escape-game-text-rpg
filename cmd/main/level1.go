@@ -1,12 +1,14 @@
 package main
 
 import (
+	"io"
+
 	"github.com/curusarn/escape-game-text-rpg/game"
 	"github.com/curusarn/escape-game-text-rpg/position"
 	"github.com/curusarn/escape-game-text-rpg/terrain"
 )
 
-func level1() int {
+func level1(screenLog, statusLog io.Writer) int {
 	e := terrain.Terrain{
 		PeakMsg:     "the edge of the world",
 		CantMoveMsg: "You cannot sail over the edge of the world.",
@@ -96,6 +98,9 @@ Exit with 'exit'.
 		MoveMsg:        "You have sailed ",
 		Intro:          intro,
 		Help:           help,
+		ScreenLog:      screenLog,
+		StatusLog:      statusLog,
+		LevelName:      "level1",
 	}
 
 	return g.Start()
