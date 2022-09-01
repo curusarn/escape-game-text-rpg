@@ -10,6 +10,8 @@ import (
 	"github.com/curusarn/escape-game-text-rpg/terrain"
 )
 
+type ActionFuncType func(*Game) (bool, string)
+
 type Game struct {
 	GameMap        map[position.Position]terrain.Terrain
 	PlayerPosition position.Position
@@ -18,6 +20,10 @@ type Game struct {
 	Intro          string
 	Help           string
 	GameState      int
+
+	LogFile    string
+	ActionStr  string
+	ActionFunc ActionFuncType
 }
 
 func (g *Game) Start() int {
@@ -102,6 +108,9 @@ func (g *Game) HandleInput(input string) (bool, string) {
 	default:
 		if length != 1 {
 			return true, "You need to type something.\n" + g.Help
+		}
+		if g.ActionStr != "" && words[0] == g.ActionStr {
+			return g.ActionFunc(g)
 		}
 		dir, err := position.ParseDirection(words[0])
 		if err != nil {

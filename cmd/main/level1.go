@@ -1,14 +1,12 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/curusarn/escape-game-text-rpg/game"
 	"github.com/curusarn/escape-game-text-rpg/position"
 	"github.com/curusarn/escape-game-text-rpg/terrain"
 )
 
-func run() int {
+func level1() int {
 	e := terrain.Terrain{
 		PeakMsg:     "the edge of the world",
 		CantMoveMsg: "You cannot sail over the edge of the world.",
@@ -82,7 +80,7 @@ __        __   _                            _
 	
 You are a captain of a small ship in the middle of the sea.
 Where should we sail next?
-Type your next command.
+Type your next command. (Type 'help' for list of available commands.)
 	`
 	help := `
 Sail around with 'north'/'east'/'south'/'west'
@@ -101,21 +99,4 @@ Exit with 'exit'.
 	}
 
 	return g.Start()
-}
-
-func main() {
-	for {
-		state := run()
-		if state == 1 {
-			fmt.Printf("Restarting the game ...")
-			continue
-		}
-		if state == 2 {
-			fmt.Printf("TODO: Victory  (level 2) ...")
-			// Mark level1 as completed
-			break
-		}
-		break
-	}
-	return
 }
